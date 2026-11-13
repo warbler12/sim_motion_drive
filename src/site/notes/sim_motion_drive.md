@@ -2,18 +2,8 @@
 {"dg-publish":true,"permalink":"/sim-motion-drive/","tags":["gardenEntry"],"dg-note-properties":{}}
 ---
 
-
-
-
-
-personal token: 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
-[Digital Garden](https://simmotiondrive.vercel.app/)
-
-
-
 ### 一、硬件与被控对象
-- 电机类型：PMSM / BLDC / 感应电机
-- [Init_plant](D:\project\sim_motion_drive\plant\Init_plant.m)
+- 电机类型：PMSM / BLDC / 感应电机 见 [...\plant\Init_plant](D:\project\sim_motion_drive\plant\Init_plant.m)
 
 - 控制目标：位置 / 速度 / 转矩
 - 传感器：电流、编码器、母线电压
