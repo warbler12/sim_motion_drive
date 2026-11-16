@@ -4,7 +4,7 @@
 
 ### 一、硬件与被控对象
 - 电机类型：PMSM / BLDC / 感应电机 见 [...\plant\Init_plant](D:\project\sim_motion_drive\plant\Init_plant.m)
-
+![Pasted image 20261116095807.png](/img/user/images/Pasted%20image%2020261116095807.png)
 - 控制目标：位置 / 速度 / 转矩
 - 传感器：电流、编码器、母线电压
 - 控制器：TI F28379D、PWM 频率、ADC 采样方式
@@ -12,6 +12,16 @@
 
 ### 二、控制架构
 - 位置环 → 速度环 → 电流环
+位置环![Pasted image 20261116095840.png](/img/user/images/Pasted%20image%2020261116095840.png)
+1. Position_measurement包含传动比转换
+2. Position_calculation:![Pasted image 20261116102123.png](/img/user/images/Pasted%20image%2020261116102123.png)
+	其中SimulinkBlock_TrajGen_3ad找不到S-Function函数，系统运行时调用的是.mexw64文件，即编译后文件。
+	ctrl_position_measurement给terminal了，所以目前是个开环。
+	jerk是加速度微分。标橙的变量在modules里定义。
+3. 变体源部分可选择debug模式，用阶跃位置参考值
+4. PI_arw_pos:
+![Pasted image 20261116111759.png](/img/user/images/Pasted%20image%2020261116111759.png)
+5. 
 
 - 内环周期、外环周期分别是多少
 - Id、Iq 分别怎么给定
@@ -36,8 +46,7 @@ Sim_environment.slx![Pasted image 20261113133704.png](/img/user/images/Pasted%20
 
 - 子模型：`Pos_spd_control`、`Tq_control` 各负责什么
 - CLA 模块：哪些算法跑在 CLA 上
-- 库依赖：`Motion Drive Library` 提供哪些基础模块
-- 模型引用关系：谁引用谁，谁是 Top Model
+
 
 ### 五、参数与初始化
 - 电机参数：Rs、Ld、Lq、极对数、磁链
