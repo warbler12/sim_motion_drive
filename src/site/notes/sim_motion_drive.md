@@ -12,19 +12,40 @@
 
 ### 二、控制架构
 - 位置环 → 速度环 → 电流环
-位置环![Pasted image 20261116095840.png](/img/user/images/Pasted%20image%2020261116095840.png)
-1. Position_measurement包含传动比转换
+**`Pos_spd_control`模块**均由主cpu运算得到。
+#### **位置环**
+![Pasted image 20261118094833.png](/img/user/images/Pasted%20image%2020261118094833.png)
+1. Position_measurement包含传动比转换。
 2. Position_calculation:![Pasted image 20261116102123.png](/img/user/images/Pasted%20image%2020261116102123.png)
 	其中SimulinkBlock_TrajGen_3ad找不到S-Function函数，系统运行时调用的是.mexw64文件，即编译后文件。
 	ctrl_position_measurement给terminal了，所以目前是个开环。
 	jerk是加速度微分。标橙的变量在modules里定义。
-3. 变体源部分可选择debug模式，用阶跃位置参考值
+3. 变体源部分可选择debug模式，用阶跃作位置参考值，同时前馈的速度参考值为0
 4. PI_arw_pos:
 ![Pasted image 20261116111759.png](/img/user/images/Pasted%20image%2020261116111759.png)
-5. 
+	输出速度修正量。
+	Anti-Windup法抗积分饱和：
+	![Pasted image 20261118095652.png](/img/user/images/Pasted%20image%2020261118095652.png)
+	ctrl_kp_position=0.7，ctrl_ki_position=0
+#### **速度环**
+![Pasted image 20261123100114.png](/img/user/images/Pasted%20image%2020261123100114.png)
+1. 速度环同样包含前馈控制+反馈控制，结构同位置环。`ctrl_kp_speed=0.22，ctrl_ki_speed=50.
+2. 当前`ctrl_torque_loop_en=0`，执行速度环。`ctrl_iq_loop=0`，理论上是否这里也会有类似速度环结构的转矩调节器。
+3. `exicitation control`中`ctrl_id_set`直接由`cla_speed_meas`赋值，单位Hz，这个值是由电机模型输出`eQEP_speed_meas`，机械角度转换为电角度，经过传动比和单位换算（k=1/2/pi,rad/s-->Hz）得来的，没有其他处理。（?）
+4. 当前id_set=0
+5. **加速度前馈** ==🟡TODO==
+	![Pasted image 20261123134903.png](/img/user/images/Pasted%20image%2020261123134903.png)
+	- `ctrl_iq_offset=k*ctrl_speed_set`
+	- `ctrl_iq_pulse`首个传递条件`ctrl_speed_target~=0`. 当前 `ctrl_FFC_gain_a=0`，加速度前馈关闭。分 acceleration 和 deceleration，`ctrl_acceleration_set=10, ctrl_deceleration_set=20`（负载特性不对称?）。
+	- `ctrl_iq_offset`和`ctrl_iq_pulse`在下一个模块将被命名为`cla_iq_offset`和`cla_iq_pulse`
 
+
+`Tq_control_CLA`模块在CLA。需要把这个子系统里的代码编译并分配到 CLA 的专属内存（LSRAM）中去执行，在仿真中并没有作区分。[控制律加速器 (CLA)](https://dev.ti.com/tirex/explore/node?isTheia=false&node=A__Ab9r7Ln8zLUQPv5MUnzbmg__C28X-ACADEMY-CN__hMpsP7d__LATEST)
+**电流运算**
+![Pasted image 20261123141137.png](/img/user/images/Pasted%20image%2020261123141137.png)
 - 内环周期、外环周期分别是多少
 - Id、Iq 分别怎么给定
+1. 
 - 是否有弱磁、MTPA、前馈
 - 是否使用无感观测器，还是编码器反馈
 
