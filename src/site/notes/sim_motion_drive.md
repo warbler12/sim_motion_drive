@@ -26,10 +26,10 @@
 	输出速度修正量。
 	Anti-Windup法抗积分饱和：
 	![Pasted image 20261118095652.png](/img/user/images/Pasted%20image%2020261118095652.png)
-	ctrl_kp_position=0.7，ctrl_ki_position=0
+	`ctrl_kp_position=0.7，ctrl_ki_position=0`
 #### **速度环**
 ![Pasted image 20261123100114.png](/img/user/images/Pasted%20image%2020261123100114.png)
-1. 速度环同样包含前馈控制+反馈控制，结构同位置环。`ctrl_kp_speed=0.22，ctrl_ki_speed=50.
+1. 速度环同样包含前馈控制+反馈控制，结构同位置环。`ctrl_kp_speed=0.22，ctrl_ki_speed=50.`
 2. 当前`ctrl_torque_loop_en=0`，执行速度环。`ctrl_iq_loop=0`，理论上是否这里也会有类似速度环结构的转矩调节器。
 3. `exicitation control`中`ctrl_id_set`直接由`cla_speed_meas`赋值，单位Hz，这个值是由电机模型输出`eQEP_speed_meas`，机械角度转换为电角度，经过传动比和单位换算（k=1/2/pi,rad/s-->Hz）得来的，没有其他处理。（?）
 4. 当前id_set=0
