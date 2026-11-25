@@ -30,15 +30,16 @@
 #### **速度环**
 ![Pasted image 20261123100114.png](/img/user/images/Pasted%20image%2020261123100114.png)
 1. 速度环同样包含前馈控制+反馈控制，结构同位置环。`ctrl_kp_speed=0.22，ctrl_ki_speed=50.`
-2. 当前`ctrl_torque_loop_en=0`，执行速度环。`ctrl_iq_loop=0`，理论上是否这里也会有类似速度环结构的转矩调节器。
+2. 当前`ctrl_torque_loop_en=0`，执行速度环。`ctrl_iq_loop=0`，理论上是否这里也会有类似速度环结构的转矩调节器。==#TODO==
 3. `exicitation control`中`ctrl_id_set`直接由`cla_speed_meas`赋值，单位Hz，这个值是由电机模型输出`eQEP_speed_meas`，机械角度转换为电角度，经过传动比和单位换算（k=1/2/pi,rad/s-->Hz）得来的，没有其他处理。（?）
 4. 当前id_set=0，将在Tq_control_CLA模块进一步处理。
 5. **加速度前馈** ==🟡TODO==
 	![Pasted image 20261123134903.png](/img/user/images/Pasted%20image%2020261123134903.png)
 	- `ctrl_iq_offset=k*ctrl_speed_set`
-	- `ctrl_iq_pulse`首个传递条件`ctrl_speed_target~=0`. 当前 `ctrl_FFC_gain_a=0`，加速度前馈关闭。分 acceleration 和 deceleration，`ctrl_acceleration_set=10, ctrl_deceleration_set=20`（负载特性不对称?）。
+	- `ctrl_iq_pulse`首个传递条件`ctrl_speed_target~=0`。在加速度前馈启用时，将会是个阶跃信号，之后作为额外iq_ref的初值与判定条件。当前 `ctrl_FFC_gain_a=0`，加速度前馈关闭。
+	- 分 acceleration 和 deceleration，`ctrl_acceleration_set=10, ctrl_deceleration_set=20`（负载特性不对称?需要手动选择）。
 	- `ctrl_iq_offset`和`ctrl_iq_pulse`在下一个模块将被命名为`cla_iq_offset`和`cla_iq_pulse`。
-
+	
 
 `Tq_control_CLA`模块在CLA。需要把这个子系统里的代码编译并分配到 CLA 的专属内存（LSRAM）中去执行，在仿真中并没有作区分。[控制律加速器 (CLA)](https://dev.ti.com/tirex/explore/node?isTheia=false&node=A__Ab9r7Ln8zLUQPv5MUnzbmg__C28X-ACADEMY-CN__hMpsP7d__LATEST)
 **电流运算**
@@ -61,11 +62,14 @@
 **其中iq:**
 **iq_limitations:**
 ![Pasted image 20261125110020.png](/img/user/images/Pasted%20image%2020261125110020.png)
+- `cla_iq_in`由前馈`cla_iq_offset(k*spd_in) + cla_iq_pulse(仅在速度从0变化或变为0时生效，积分器积decay，用于斜坡衰减，设积分下限0)`和反馈pid`cla_iq_set`相加得到。
+	$T=J*\alpha+B*\omega+T_{friction}​​$ 
+
+**Flux_Controller:**
+![Pasted image 20261125150056.png](/img/user/images/Pasted%20image%2020261125150056.png)
 
 
 - 内环周期、外环周期分别是多少
-- Id、Iq 分别怎么给定
-1. 
 - 是否有弱磁、MTPA、前馈
 - 是否使用无感观测器，还是编码器反馈
 
