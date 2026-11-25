@@ -32,17 +32,37 @@
 1. 速度环同样包含前馈控制+反馈控制，结构同位置环。`ctrl_kp_speed=0.22，ctrl_ki_speed=50.`
 2. 当前`ctrl_torque_loop_en=0`，执行速度环。`ctrl_iq_loop=0`，理论上是否这里也会有类似速度环结构的转矩调节器。
 3. `exicitation control`中`ctrl_id_set`直接由`cla_speed_meas`赋值，单位Hz，这个值是由电机模型输出`eQEP_speed_meas`，机械角度转换为电角度，经过传动比和单位换算（k=1/2/pi,rad/s-->Hz）得来的，没有其他处理。（?）
-4. 当前id_set=0
+4. 当前id_set=0，将在Tq_control_CLA模块进一步处理。
 5. **加速度前馈** ==🟡TODO==
 	![Pasted image 20261123134903.png](/img/user/images/Pasted%20image%2020261123134903.png)
 	- `ctrl_iq_offset=k*ctrl_speed_set`
 	- `ctrl_iq_pulse`首个传递条件`ctrl_speed_target~=0`. 当前 `ctrl_FFC_gain_a=0`，加速度前馈关闭。分 acceleration 和 deceleration，`ctrl_acceleration_set=10, ctrl_deceleration_set=20`（负载特性不对称?）。
-	- `ctrl_iq_offset`和`ctrl_iq_pulse`在下一个模块将被命名为`cla_iq_offset`和`cla_iq_pulse`
+	- `ctrl_iq_offset`和`ctrl_iq_pulse`在下一个模块将被命名为`cla_iq_offset`和`cla_iq_pulse`。
 
 
 `Tq_control_CLA`模块在CLA。需要把这个子系统里的代码编译并分配到 CLA 的专属内存（LSRAM）中去执行，在仿真中并没有作区分。[控制律加速器 (CLA)](https://dev.ti.com/tirex/explore/node?isTheia=false&node=A__Ab9r7Ln8zLUQPv5MUnzbmg__C28X-ACADEMY-CN__hMpsP7d__LATEST)
 **电流运算**
 ![Pasted image 20261123141137.png](/img/user/images/Pasted%20image%2020261123141137.png)
+**其中id：**
+**Flux Controller**:
+![Pasted image 20261123165536.png](/img/user/images/Pasted%20image%2020261123165536.png)
+-  `cla_psi_set=psi_max`，测试用例（ [...\scripts\open_init_run_plot.m](D:\project\sim_motion_drive\scripts\open_init_run_plot.m)）中存在`cla_psi_set.Value = U_DC/2/(1950*2*pi/60)/ASM.pole_pairs`。
+ - `cla_kp_psi=1/cla_R_R*100; cla_ki_psi = cla_R_R/cla_L_M;`
+	基于异步电机转子磁链的一阶惯性物理模型推导出来的极点对消（Pole-Zero Cancellation）整定法。  
+	异步电机转子磁链的微分方程近似为：
+	 ![Pasted image 20261125101208.png](/img/user/images/Pasted%20image%2020261125101208.png)（其中转子时间常数$T_r=L_R​/R_R​$ ​ ）。
+	`cla_kp_psi = 1/cla_R_R * 100`：比例增益与转子电阻 RR​ 成反比。这里的 100 是带宽调节系数，意味着你希望磁链环的响应速度是电机固有电气响应速度的 100 倍。
+	`cla_ki_psi = cla_R_R / cla_L_M`：积分增益被精确设置为 $R_R​/L_M​$ （即 1/Tr​ ）。这个设置的精妙之处在于，它让 PI 控制器的零点，刚好抵消了电机模型中的固有极点。经过这种整定，原本复杂的耦合系统被简化成了一个纯粹的一阶系统，极大提升了磁链环的动态稳定性和抗干扰能力。==#TODO==
+- `cla_flux_con_en`在BLDC与PMSM处为0，其余ASM=1，启用flux controller。而在下一个switch中，id~=0则选取前级传递的id_set，即优先级：弱磁/测试 > 内部磁链闭环（ASM 维持磁场） > 默认零值（PMSM 常规运行）。
+- disable_id_control:
+	![Pasted image 20261123170133.png](/img/user/images/Pasted%20image%2020261123170133.png)
+	确保idq_set=0时id_in=0，即ASM不出转矩时关闭flux control。
+
+**其中iq:**
+**iq_limitations:**
+![Pasted image 20261125110020.png](/img/user/images/Pasted%20image%2020261125110020.png)
+
+
 - 内环周期、外环周期分别是多少
 - Id、Iq 分别怎么给定
 1. 
